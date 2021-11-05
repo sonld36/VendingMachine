@@ -125,16 +125,15 @@ public class Controller implements Initializable {
               }
               sanPham.setSoLuong(sanPham.getSoLuong() - 1);
               KhuyenMai.setLimitBudget(KhuyenMai.getLimitBudget() - sanPham.getGia());
-              System.out.println(KhuyenMai.getLimitBudget());
+//              System.out.println(KhuyenMai.getLimitBudget());
               setThongTinSP();
+              destroyEventHandlerPromo();
               alert.setContentText("Take the production please");
               alert.setTitle("Thanks");
               alert.show();
+
           }
       });
-
-
-
     };
 
     @Override
@@ -142,7 +141,7 @@ public class Controller implements Initializable {
         curCashInfor.setVisible(false);
         String accept = "Đồng ý";
         String pay = "Thanh Toán";
-        khuyenMai = new KhuyenMai(10);
+        khuyenMai = new KhuyenMai(80);
         payButton.setText(accept);
         cancelButton.setVisible(false);
         coke = new Coke("Coke", 10000, 100);
@@ -272,5 +271,9 @@ public class Controller implements Initializable {
         slSoda.setText(String.valueOf(soda.getSoLuong()));
     }
 
-
+    public void destroyEventHandlerPromo() {
+        cokeProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
+        pepsiProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
+        sodaProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
+    }
 }
