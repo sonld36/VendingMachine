@@ -219,13 +219,16 @@ public class Controller implements Initializable {
             @Override
             public void handle(MouseEvent event) {
                 if(payButton.getText().equals(accept)) {
-                    int depoMoney = Integer.parseInt(cashInput.getText());
-                    if(depoMoney > 200000 || (depoMoney % 10000 != 0)) {
+                    int depoMoney = 0;
+                    if(!cashInput.getText().equals("")) {
+                        depoMoney = Integer.parseInt(cashInput.getText());
+                    }
+                    if(depoMoney > 200000 || depoMoney <= 0 || (depoMoney % 10000 != 0)) {
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setContentText("Số tiền không hợp lệ hoặc lớn hơn 200000");
                         alert.show();
                     }else {
-                        user = new User(Integer.parseInt(cashInput.getText()), Integer.parseInt(cashInput.getText()));
+                        user = new User(depoMoney, depoMoney);
                         curCash.setText(cashToString(user.getTotalCash()));
                         curCashInfor.setVisible(true);
                         inputInfor.setVisible(false);
