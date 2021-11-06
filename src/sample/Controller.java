@@ -219,11 +219,9 @@ public class Controller implements Initializable {
             @Override
             public void handle(MouseEvent event) {
                 if(payButton.getText().equals(accept)) {
-                    int depoMoney = 0;
-                    if(!cashInput.getText().equals("")) {
-                        depoMoney = Integer.parseInt(cashInput.getText());
-                    }
-                    if(depoMoney > 200000 || depoMoney <= 0 || (depoMoney % 10000 != 0)) {
+                    int depoMoney = checkCashInput(cashInput.getText());
+
+                    if(depoMoney == 0) {
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setContentText("Số tiền không hợp lệ hoặc lớn hơn 200000");
                         alert.show();
@@ -329,6 +327,24 @@ public class Controller implements Initializable {
         quanCoke.setText(String.valueOf(coke.getQuantity()));
         quanPepsi.setText(String.valueOf(pepsi.getQuantity()));
         quanSoda.setText(String.valueOf(soda.getQuantity()));
+    }
+
+    public int checkCashInput(String cash) {
+        if(cash.equals("") || cash.matches("[a-zA-Z]+")) {
+            return 0;
+        }
+        int check;
+        if(cash.length() == 5) {
+            check = 10000;
+        } else {
+            check = 100000;
+        }
+        int deposit = Integer.parseInt(cashInput.getText());
+        if(deposit > 200000 || deposit <= 0 || deposit % check != 0) {
+            return 0;
+        } else {
+            return deposit;
+        }
     }
 
     /**
