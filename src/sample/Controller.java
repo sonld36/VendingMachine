@@ -335,7 +335,7 @@ public class Controller implements Initializable {
      * @return 
      */
     public int checkCashInput(String cash) {
-        if(cash.equals("") || cash.matches("[a-zA-Z]+")) {
+        if(cash.equals("") || cash.matches(".*[a-zA-Z].*")) {
             return 0;
         }
         int check;
