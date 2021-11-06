@@ -139,16 +139,25 @@ public class Controller implements Initializable {
               }else if (productChoose == sodaProduct){
                   production = soda;
               }
-              production.setQuantity(production.getQuantity() - 1);
-              Promotion.setLimitBudget(Promotion.getLimitBudget() - production.getPrice());
-//              System.out.println(KhuyenMai.getLimitBudget());
-              setProductInfor();
-              destroyEventHandlerPromo();
-              addEventHanlerChoose();
-              alert.setContentText("Vui lòng lấy sản phẩm");
-              alert.setTitle("xin cảm ơn !!");
-              alert.show();
-              congratInfor.setVisible(false);
+
+              if(production.getQuantity() > 0) {
+                  production.setQuantity(production.getQuantity() - 1);
+                  Promotion.setLimitBudget(Promotion.getLimitBudget() - production.getPrice());
+                  System.out.println(Promotion.getLimitBudget());
+                  setProductInfor();
+                  destroyEventHandlerPromo();
+                  addEventHanlerChoose();
+                  alert.setContentText("Vui lòng lấy sản phẩm");
+                  alert.setTitle("xin cảm ơn !!");
+                  alert.show();
+                  congratInfor.setVisible(false);
+              } else {
+                  alert.setTitle("Sorry !!");
+                  alert.setContentText("Sản phẩm bạn chọn đã hết, vui lòng chọn sản phẩm khác !!");
+                  alert.show();
+              }
+
+
           }
       });
     };
@@ -158,7 +167,7 @@ public class Controller implements Initializable {
         String accept = "Đồng ý";
         String pay = "Thanh Toán";
 
-        promotion = new Promotion(80);
+        promotion = new Promotion(10);
         coke = new Coke("Coke", 10000, 100);
         pepsi = new Pepsi("Pepsi", 10000, 200);
         soda = new Soda("Soda", 20000, 0);
@@ -259,6 +268,7 @@ public class Controller implements Initializable {
             }
         });
 
+
         /**
          * khi khách hàng không muốn mua sản phẩm nữa thì cancelButton được sử dụng
          * nếu tiền thừa của khách hàng vẫn còn thì trả lại tiền thừa cho khách hàng và ngược lại
@@ -269,7 +279,7 @@ public class Controller implements Initializable {
             public void handle(MouseEvent event) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 if(user.getRemainCash() > 0) {
-                    alert.setContentText("Cảm ơn đã sử dụng dịch vụ!\nVui lòng nhận lại tiên thừa");
+                    alert.setContentText("Cảm ơn đã sử dụng dịch vụ!\nTiền thừa của quý khách là: " + cashToString(user.getRemainCash()) + " VNĐ");
 
                 } else {
                     alert.setContentText("Cảm ơn đã sử dụng dịch vụ");

@@ -244,7 +244,7 @@
             </TextArea>
          </children>
       </VBox>
-      <HBox fx:id="curCashInfor" layoutX="510.0" layoutY="60.0" prefHeight="25.0" prefWidth="174.0">
+      <HBox fx:id="curCashInfor" layoutX="524.0" layoutY="51.0" prefHeight="25.0" prefWidth="174.0">
          <children>
             <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Hiện có:">
                <font>
