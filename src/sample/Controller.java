@@ -329,6 +329,11 @@ public class Controller implements Initializable {
         quanSoda.setText(String.valueOf(soda.getQuantity()));
     }
 
+    /**
+     * Hàm check thông tin tiền nhập vào có hợp lệ hay không.
+     * @param cash
+     * @return 
+     */
     public int checkCashInput(String cash) {
         if(cash.equals("") || cash.matches("[a-zA-Z]+")) {
             return 0;
