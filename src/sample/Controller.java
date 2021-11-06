@@ -1,19 +1,17 @@
 package sample;
 
-import Model.KhachHang;
-import Model.KhuyenMai;
-import Model.SanPham.Coke;
-import Model.SanPham.Pepsi;
-import Model.SanPham.SanPham;
-import Model.SanPham.Soda;
+import Model.User;
+import Model.Promotion;
+import Model.Production.Coke;
+import Model.Production.Pepsi;
+import Model.Production.Production;
+import Model.Production.Soda;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -49,11 +47,11 @@ public class Controller implements Initializable {
     @FXML
     private Text exCash;
     @FXML
-    private Text slCoke;
+    private Text quanCoke;
     @FXML
-    private Text slPepsi;
+    private Text quanPepsi;
     @FXML
-    private Text slSoda;
+    private Text quanSoda;
     @FXML
     private TextArea cashInput;
     @FXML
@@ -64,102 +62,130 @@ public class Controller implements Initializable {
     private VBox inputInfor;
     @FXML
     private Button cancelButton;
+    @FXML
+    private HBox congratInfor;
 
     Coke coke;
     Pepsi pepsi;
     Soda soda;
-    KhachHang kh;
-    Spinner<Integer> soLuongSp;
-    KhuyenMai khuyenMai;
-    SanPham sanPham = null;
+    User user;
+    Spinner<Integer> productQuantity;
+    Promotion promotion;
+    Production production = null;
 
+    /**
+     hàm chooseEvent dành cho 3 Vbox của 3 sản phẩm
+     khi click vào Vbox thì có thông tin để mua và thanh toán SP
 
+    **/
     private final EventHandler<MouseEvent> chooseEvent = e -> {
         VBox clicked = (VBox) e.getSource();
 
         if(clicked == cokeProduct){
-            sanPham = coke;
+            production = coke;
         }
         else if (clicked == pepsiProduct) {
-            sanPham = pepsi;
+            production = pepsi;
         }else if (clicked == sodaProduct){
-            sanPham = soda;
+            production = soda;
         }
 
-        name.setText(sanPham.getTenSanPham());
-        totalCash.setText(cashToString(sanPham.getGia()));
-        exCash.setText(cashToString(kh.getTienThua()));
-        payButton.setDisable(false);
+        if(production.getQuantity() > 0) {
+            name.setText(production.getProductName());
+            totalCash.setText(cashToString(production.getPrice()));
+            exCash.setText(cashToString(user.getRemainCash()));
+            payButton.setDisable(false);
 
-        infoTable.setVisible(true);
+            infoTable.setVisible(true);
 
-        soLuongSp = new Spinner<>(1, sanPham.getSoLuong(), 1);
-        soLuongSp.valueProperty().addListener(new ChangeListener<Integer>() {
-            @Override
-            public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
-                int giaSP = sanPham.getGia();
-                int giaMoi = giaSP*newValue;
-                totalCash.setText(cashToString(giaMoi));
-                exCash.setText(cashToString(kh.getTienThua() - giaMoi));
-            }
-        });
-        spinner.getChildren().add(soLuongSp);
+            productQuantity = new Spinner<>(1, production.getQuantity(), 1);
+            productQuantity.valueProperty().addListener(new ChangeListener<Integer>() {
+                @Override
+                public void changed(ObservableValue<? extends Integer> observable, Integer oldValue, Integer newValue) {
+                    int productPrice = production.getPrice();
+                    int newPrice = productPrice*newValue;
+                    totalCash.setText(cashToString(newPrice));
+                    exCash.setText(cashToString(user.getRemainCash() - newPrice));
+                }
+            });
+            spinner.getChildren().add(productQuantity);
+        } else {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Sorry !!");
+            alert.setContentText("Sản phẩm bạn chọn đã hết, vui lòng chọn sản phẩm khác !!");
+            alert.show();
+        }
+
+
     };
 
-
+    /**
+     * hàm choosePromo được sử dụng khi khách hàng được nhận sản phẩm khuyến mãi
+     *
+     */
     private final EventHandler<MouseEvent> choosePromo = e -> {
       VBox productChoose = (VBox) e.getSource();
       Alert alert = new Alert(Alert.AlertType.INFORMATION);
-      alert.setTitle("Confirm for The Promotion Product");
-      alert.setContentText("Are you sure for this product ?");
+      alert.setTitle("Xác nhận");
+      alert.setContentText("Bạn chắc chắn muốn nhận sản phẩm này ?");
       alert.showAndWait().ifPresent(buttonType -> {
           if(buttonType == ButtonType.OK) {
 
               if(productChoose == cokeProduct){
-                  sanPham = coke;
+                  production = coke;
               }
               else if (productChoose == pepsiProduct) {
-                  sanPham = pepsi;
+                  production = pepsi;
               }else if (productChoose == sodaProduct){
-                  sanPham = soda;
+                  production = soda;
               }
-              sanPham.setSoLuong(sanPham.getSoLuong() - 1);
-              KhuyenMai.setLimitBudget(KhuyenMai.getLimitBudget() - sanPham.getGia());
+              production.setQuantity(production.getQuantity() - 1);
+              Promotion.setLimitBudget(Promotion.getLimitBudget() - production.getPrice());
 //              System.out.println(KhuyenMai.getLimitBudget());
-              setThongTinSP();
+              setProductInfor();
               destroyEventHandlerPromo();
-              alert.setContentText("Take the production please");
-              alert.setTitle("Thanks");
+              addEventHanlerChoose();
+              alert.setContentText("Vui lòng lấy sản phẩm");
+              alert.setTitle("xin cảm ơn !!");
               alert.show();
-
+              congratInfor.setVisible(false);
           }
       });
     };
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        curCashInfor.setVisible(false);
         String accept = "Đồng ý";
         String pay = "Thanh Toán";
-        khuyenMai = new KhuyenMai(80);
-        payButton.setText(accept);
-        cancelButton.setVisible(false);
+
+        promotion = new Promotion(80);
         coke = new Coke("Coke", 10000, 100);
         pepsi = new Pepsi("Pepsi", 10000, 200);
-        soda = new Soda("Soda", 20000, 56);
-        setThongTinSP();
-        infoTable.setVisible(false);
+        soda = new Soda("Soda", 20000, 0);
 
+        setProductInfor();
+        payButton.setText(accept);
+        infoTable.setVisible(false);
+        cancelButton.setVisible(false);
+        curCashInfor.setVisible(false);
+        congratInfor.setVisible(false);
+
+        /**
+         * biến clock là một cái đồng hồ
+         * dùng để check khi đến cuối ngày đã đạt chỉ tiêu khuyến mãi hay chưa
+         * nếu chưa đạt thì set lại xác suất nhận khuyến mãi cho ngày hôm sau
+         *
+         */
         Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, event -> {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
             String currentTime = LocalTime.now().format(dtf);
             if(currentTime.equals("23:59:59")) {
-                if(KhuyenMai.getLimitBudget() > 0) {
-                    khuyenMai.setProbab(50);
+                if(Promotion.getLimitBudget() > 0) {
+                    promotion.setProbab(50);
                 } else {
-                    khuyenMai.setProbab(10);
+                    promotion.setProbab(10);
                 }
-                KhuyenMai.setLimitBudget(50000);
+                Promotion.setLimitBudget(50000);
             }
         }),
                 new KeyFrame(Duration.seconds(1))
@@ -167,55 +193,65 @@ public class Controller implements Initializable {
 
         clock.setCycleCount(Animation.INDEFINITE);
         clock.play();
+
+        /**
+         * payButton vừa có chức năng đồng ý đưa tiền vào vừa có chức năng thanh toán.
+         * nhận biết bằng hàm getText của button
+         * khi nhập tiền họp lệ thì hệ thống sẽ đồng ý cho thao tác với sản phẩm
+         * nhập tiền không hợp lệ thì sẽ đưa ra thông báo cho người sử dụng
+         */
+        /**
+         * khi thanh toán sẽ kiểm tra xem người sử dụng có đủ tiền hay không
+         * nếu đủ tiền thì thanh toán thành công
+         * cập nhật thông tin sản phẩm
+         * kiểm tra khách hàng có đạt điều kiện để nhận khuyến mãi hay không
+         */
         payButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
                 if(payButton.getText().equals(accept)) {
-                    int tienNap = Integer.parseInt(cashInput.getText());
-                    if(tienNap > 200000 || (tienNap % 10000 != 0)) {
+                    int depoMoney = Integer.parseInt(cashInput.getText());
+                    if(depoMoney > 200000 || (depoMoney % 10000 != 0)) {
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setContentText("Số tiền không hợp lệ hoặc lớn hơn 200000");
                         alert.show();
                     }else {
-                        kh = new KhachHang(Integer.parseInt(cashInput.getText()), Integer.parseInt(cashInput.getText()));
-                        curCash.setText(cashToString(kh.getTongTien()));
+                        user = new User(Integer.parseInt(cashInput.getText()), Integer.parseInt(cashInput.getText()));
+                        curCash.setText(cashToString(user.getTotalCash()));
                         curCashInfor.setVisible(true);
                         inputInfor.setVisible(false);
                         payButton.setText(pay);
                         payButton.setDisable(true);
-                        cokeProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
-                        pepsiProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
-                        sodaProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
+                        addEventHanlerChoose();
                         cancelButton.setVisible(true);
-
                     }
                 } else {
-                    int sl = soLuongSp.getValue();
-                    int tienCanThanhToan = sl * sanPham.getGia();
-                    int tienConLai = kh.getTienThua() - tienCanThanhToan;
-                    if(tienConLai < 0) {
+                    int quantity = productQuantity.getValue();
+                    int needtoPay = quantity * production.getPrice();
+                    int remainCash = user.getRemainCash() - needtoPay;
+                    if(remainCash < 0) {
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setContentText("Số tiền của quý khách không đủ để thanh toán, vui lòng nạp thêm");
                         alert.show();
                     } else {
-                        khuyenMai.countSameProduct(sanPham, sl);
-                        sanPham.setSoLuong(sanPham.getSoLuong() - sl);
-                        kh.setTienThua(tienConLai);
-                        curCash.setText(cashToString(tienConLai));
-                        setThongTinSP();
+                        promotion.countSameProduct(production, quantity);
+                        production.setQuantity(production.getQuantity() - quantity);
+                        user.setRemainCash(remainCash);
+                        curCash.setText(cashToString(remainCash));
+                        setProductInfor();
                         infoTable.setVisible(false);
                         payButton.setDisable(true);
                         Alert alert = new Alert(Alert.AlertType.INFORMATION);
                         alert.setContentText("Mua sản phẩm thành công");
                         alert.showAndWait();
-                        if(khuyenMai.checkVictor()) {
-                            KhuyenMai.setCount(0);
-                            KhuyenMai.setVictor(false);
+                        if(promotion.checkVictor()) {
+                            Promotion.setCount(0);
+                            Promotion.setVictor(false);
                             alert.setContentText("Bạn là người may mắn nhận được 1 sản phẩm bất kỳ miễn phí\nHãy chọn 1 sản phẩm bất kỳ");
                             alert.show();
-                            cokeProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
-                            pepsiProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
-                            sodaProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
+                            congratInfor.setVisible(true);
+                            destroyEventHanlerChoose();
+                            addEventHandlerPromo();
                         }
                     }
                 }
@@ -223,28 +259,30 @@ public class Controller implements Initializable {
             }
         });
 
+        /**
+         * khi khách hàng không muốn mua sản phẩm nữa thì cancelButton được sử dụng
+         * nếu tiền thừa của khách hàng vẫn còn thì trả lại tiền thừa cho khách hàng và ngược lại
+         * sẽ set lại các event cho sản phẩm và thao tác cần thiết.
+         */
         cancelButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                if(kh.getTienThua() > 0) {
+                if(user.getRemainCash() > 0) {
                     alert.setContentText("Cảm ơn đã sử dụng dịch vụ!\nVui lòng nhận lại tiên thừa");
 
                 } else {
                     alert.setContentText("Cảm ơn đã sử dụng dịch vụ");
                 }
-
-                cokeProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
-                pepsiProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
-                sodaProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
-                setThongTinSP();
+                destroyEventHanlerChoose();
+                setProductInfor();
                 infoTable.setVisible(false);
                 cashInput.setVisible(true);
                 payButton.setDisable(false);
                 payButton.setText(accept);
                 cashInput.clear();
                 inputInfor.setVisible(true);
-                kh = null;
+                user = null;
                 curCashInfor.setVisible(false);
                 cancelButton.setVisible(false);
                 alert.show();
@@ -253,6 +291,11 @@ public class Controller implements Initializable {
 
     }
 
+    /**
+     * Hàm chuyển đổi định dạng tiền để hiển thị trên máy
+     * @param cash số tiền đưa vào theo dạng số nguyên.
+     * @return trả về định dạng tiền hiển thị theo dạng chuỗi
+     */
     public String cashToString(int cash) {
         String cashOfString = String.valueOf(cash);
         int length = cashOfString.length();
@@ -265,15 +308,50 @@ public class Controller implements Initializable {
         return cashOfString;
     }
 
-    public void setThongTinSP() {
-        slCoke.setText(String.valueOf(coke.getSoLuong()));
-        slPepsi.setText(String.valueOf(pepsi.getSoLuong()));
-        slSoda.setText(String.valueOf(soda.getSoLuong()));
+
+    /**
+     * set lại các thông tin hiển thị sản phẩm trên máy.
+     */
+    public void setProductInfor() {
+        quanCoke.setText(String.valueOf(coke.getQuantity()));
+        quanPepsi.setText(String.valueOf(pepsi.getQuantity()));
+        quanSoda.setText(String.valueOf(soda.getQuantity()));
     }
 
+    /**
+     * thêm các eventhandle khuyến mãi vào sản phẩm của hệ thống.
+     */
+    public void addEventHandlerPromo() {
+        cokeProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
+        pepsiProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
+        sodaProduct.addEventHandler(MOUSE_CLICKED, choosePromo);
+    }
+
+    /**
+     * xóa bỏ các eventhandle khuyến mãi khỏi sản phẩm của hệ thống.
+     */
     public void destroyEventHandlerPromo() {
         cokeProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
         pepsiProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
         sodaProduct.removeEventHandler(MOUSE_CLICKED, choosePromo);
+    }
+
+    /**
+     * thêm các eventhandle chọn sản phẩm vào trong các sản phẩm của hệ thống.
+     */
+    public void addEventHanlerChoose() {
+        cokeProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
+        pepsiProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
+        sodaProduct.addEventHandler(MOUSE_CLICKED, chooseEvent);
+    }
+
+
+    /**
+     * xóa bỏ các eventhanle chọn sản phẩm khỏi các sản phẩm của hệ thống.
+     */
+    public void destroyEventHanlerChoose() {
+        cokeProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
+        pepsiProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
+        sodaProduct.removeEventHandler(MOUSE_CLICKED, chooseEvent);
     }
 }
